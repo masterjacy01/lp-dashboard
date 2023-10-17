@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import requests
+import plotly.graph_objects as go
 
 # Define the API endpoint
 API_ENDPOINT = "http://206.189.56.114/metrics/status"
@@ -43,15 +44,28 @@ def display_liquidity_positions(data):
     """Display liquidity positions."""
     st.subheader("Liquidity Positions")
     
-    # Prepare data for plotting
-    df = pd.DataFrame(data["positions"])
-    df["Position"] = df.index + 1
-    df["Range"] = df.apply(lambda x: f"{x['range']['lowerPrice']} - {x['range']['upperPrice']}", axis=1)
+    # Extract positions data
+    positions = data["positions"]
     
-    # Plot horizontal bar chart
-    bar_chart = st.bar_chart(df.set_index("Position")[["range"]].applymap(lambda x: x["upperPrice"] - x["lowerPrice"]))
+    # Extract lower and upper prices for the bars
+    lower_prices = [pos["range"]["lowerPrice"] for pos in positions]
+    range_lengths = [pos["range"]["upperPrice"] - pos["range"]["lowerPrice"] for pos in positions]
+    names = [f"Position {i+1}" for i in range(len(positions))]
+
+    # Create the bar chart using plotly
+    fig = go.Figure(go.Bar(
+        x=range_lengths,
+        y=names,
+        orientation='h',
+        base=lower_prices,
+        text=positions,
+        hoverinfo="text"
+    ))
+    fig.update_layout(title="Open Ranges", xaxis_title="Price")
     
-    for position in data["positions"]:
+    st.plotly_chart(fig)
+    
+    for position in positions:
         st.write("Range:", f"{position['range']['lowerPrice']} - {position['range']['upperPrice']}")
         st.write("Amount 0:", position["amount0"])
         st.write("Amount 1:", position["amount1"])
