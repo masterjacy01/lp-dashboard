@@ -1,10 +1,11 @@
+import pandas as pd
 import streamlit as st
 import requests
 
 # Define the API endpoint
 API_ENDPOINT = "http://206.189.56.114/metrics/status"
 
-@st.cache(suppress_st_warning=True, ttl=300)  # Cache results for 5 minutes (300 seconds)
+@st.cache_data(ttl=300)  # Cache results for 5 minutes (300 seconds)
 def fetch_data():
     """Fetch data from the API endpoint."""
     response = requests.get(API_ENDPOINT)
@@ -41,27 +42,35 @@ def display_liquidity_overview(data):
 def display_liquidity_positions(data):
     """Display liquidity positions."""
     st.subheader("Liquidity Positions")
+    
+    # Prepare data for plotting
+    df = pd.DataFrame(data["positions"])
+    df["Position"] = df.index + 1
+    df["Range"] = df.apply(lambda x: f"{x['range']['lowerPrice']} - {x['range']['upperPrice']}", axis=1)
+    
+    # Plot horizontal bar chart
+    bar_chart = st.bar_chart(df.set_index("Position")[["range"]].applymap(lambda x: x["upperPrice"] - x["lowerPrice"]))
+    
     for position in data["positions"]:
-        st.write("Range Lower Price:", position["range"]["lowerPrice"])
-        st.write("Range Upper Price:", position["range"]["upperPrice"])
+        st.write("Range:", f"{position['range']['lowerPrice']} - {position['range']['upperPrice']}")
         st.write("Amount 0:", position["amount0"])
         st.write("Amount 1:", position["amount1"])
         st.write("---")
 
 def main():
     """Main function for the Streamlit app."""
-    st.title("API Data Visualization")
+    st.title("HODL & LP Strategy Current State")
     
     # Fetch the data
     data = fetch_data()
     
     # Display the data in a structured manner
-    if "vaultData" in data:
-        display_vault_data(data["vaultData"])
     if "liquidityOverview" in data:
         display_liquidity_overview(data["liquidityOverview"])
     if "liquidityPositions" in data:
         display_liquidity_positions(data["liquidityPositions"])
+    if "vaultData" in data:
+        display_vault_data(data["vaultData"])
 
 if __name__ == "__main__":
     main()
