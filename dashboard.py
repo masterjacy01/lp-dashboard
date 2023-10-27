@@ -3,17 +3,18 @@ import streamlit as st
 import requests
 import plotly.graph_objects as go
 
-# Define the API endpoint
-API_ENDPOINT = "http://206.189.56.114/metrics/status"
+# Define the API endpoints
+API_ENDPOINT_1 = "http://206.189.56.114/metrics/status"
+API_ENDPOINT_2 = "http://206.189.56.114:3001/metrics/status"
 
 @st.cache_data(ttl=300)  # Cache results for 5 minutes (300 seconds)
-def fetch_data():
+def fetch_data(api_endpoint):
     """Fetch data from the API endpoint."""
-    response = requests.get(API_ENDPOINT)
+    response = requests.get(api_endpoint)
     if response.status_code == 200:
         return response.json()
     else:
-        st.error("Failed to fetch data from the API.")
+        st.error(f"Failed to fetch data from {api_endpoint}.")
         return {}
 
 def display_vault_data(data):
@@ -47,10 +48,17 @@ def display_liquidity_positions(data):
     # Extract positions data
     positions = data["positions"]
     
-    # Extract lower and upper prices for the bars
-    lower_prices = [pos["range"]["lowerPrice"] for pos in positions]
-    range_lengths = [pos["range"]["upperPrice"] - pos["range"]["lowerPrice"] for pos in positions]
+    # Extract and round lower and upper prices for the bars
+    lower_prices = [round(pos["range"]["lowerPrice"], 2) for pos in positions]
+    upper_prices = [round(pos["range"]["upperPrice"], 2) for pos in positions]
+    range_lengths = [upper - lower for upper, lower in zip(upper_prices, lower_prices)]
     names = [f"Position {i+1}" for i in range(len(positions))]
+    
+    # Prepare hover text with rounded values
+    hover_text = [
+        f"Range: {lower} - {upper}<br>Amount 0: {pos['amount0']}<br>Amount 1: {pos['amount1']}"
+        for pos, lower, upper in zip(positions, lower_prices, upper_prices)
+    ]
 
     # Create the bar chart using plotly
     fig = go.Figure(go.Bar(
@@ -58,25 +66,26 @@ def display_liquidity_positions(data):
         y=names,
         orientation='h',
         base=lower_prices,
-        text=positions,
+        text=hover_text,
         hoverinfo="text"
     ))
     fig.update_layout(title="Open Ranges", xaxis_title="Price")
     
     st.plotly_chart(fig)
     
-    for position in positions:
-        st.write("Range:", f"{position['range']['lowerPrice']} - {position['range']['upperPrice']}")
-        st.write("Amount 0:", position["amount0"])
-        st.write("Amount 1:", position["amount1"])
+    # Display detailed information
+    for pos, lower, upper in zip(positions, lower_prices, upper_prices):
+        st.write(f"Range: {lower} - {upper}")
+        st.write("Amount 0:", pos["amount0"])
+        st.write("Amount 1:", pos["amount1"])
         st.write("---")
 
-def main():
-    """Main function for the Streamlit app."""
-    st.title("HODL & LP Strategy Current State")
+def display_data_for_endpoint(api_endpoint):
+    """Display data for a given API endpoint."""
+    st.subheader(f"Data from {api_endpoint}")
     
     # Fetch the data
-    data = fetch_data()
+    data = fetch_data(api_endpoint)
     
     # Display the data in a structured manner
     if "liquidityOverview" in data:
@@ -85,6 +94,19 @@ def main():
         display_liquidity_positions(data["liquidityPositions"])
     if "vaultData" in data:
         display_vault_data(data["vaultData"])
+
+def main():
+    """Main function for the Streamlit app."""
+    st.title("Arrakis Vaults Current State")
+    
+    # Create tabs for each API endpoint
+    tab1, tab2 = st.tabs(["HODL & LP Strategy", "Block Strategy"])
+
+    with tab1:
+        display_data_for_endpoint(API_ENDPOINT_1)
+
+    with tab2:
+        display_data_for_endpoint(API_ENDPOINT_2)
 
 if __name__ == "__main__":
     main()
