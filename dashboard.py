@@ -4,8 +4,9 @@ import requests
 import plotly.graph_objects as go
 
 # Define the API endpoints
-API_ENDPOINT_1 = "http://206.189.56.114/metrics/status"
+API_ENDPOINT_1 = "http://206.189.56.114:3000/metrics/status"
 API_ENDPOINT_2 = "http://206.189.56.114:3001/metrics/status"
+API_ENDPOINT_3 = "http://206.189.56.114:3002/metrics/status"
 
 @st.cache_data(ttl=300)  # Cache results for 5 minutes (300 seconds)
 def fetch_data(api_endpoint):
@@ -97,16 +98,19 @@ def display_data_for_endpoint(api_endpoint):
 
 def main():
     """Main function for the Streamlit app."""
-    st.title("Arrakis Vaults Current State")
+    st.title("Brokkr LP Vaults Current State")
     
     # Create tabs for each API endpoint
-    tab1, tab2 = st.tabs(["HODL & LP Strategy", "Block Strategy"])
+    tab1, tab2, tab3 = st.tabs(["ASYMMETRIC (5, 95)", "ASYMMETRIC (100, 5)", "HODL"])
 
     with tab1:
         display_data_for_endpoint(API_ENDPOINT_1)
 
     with tab2:
         display_data_for_endpoint(API_ENDPOINT_2)
+
+    with tab3:
+        display_data_for_endpoint(API_ENDPOINT_3)
 
 if __name__ == "__main__":
     main()
