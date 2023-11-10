@@ -12,12 +12,18 @@ API_ENDPOINT_4 = "http://206.189.56.114:3003/metrics/status"
 @st.cache_data(ttl=300)  # Cache results for 5 minutes (300 seconds)
 def fetch_data(api_endpoint):
     """Fetch data from the API endpoint."""
-    response = requests.get(api_endpoint)
-    if response.status_code == 200:
+    try:
+        response = requests.get(api_endpoint)
+        response.raise_for_status()  # Raises an HTTPError for bad responses
         return response.json()
-    else:
-        st.error(f"Failed to fetch data from {api_endpoint}.")
-        return {}
+    except requests.exceptions.HTTPError as http_err:
+        st.error(f"HTTP error occurred while fetching data from {api_endpoint}: {http_err}")
+    except requests.exceptions.ConnectionError as conn_err:
+        st.error(f"Connection error occurred while fetching data from {api_endpoint}: {conn_err}")
+    except Exception as e:
+        st.error(f"An error occurred while fetching data from {api_endpoint}: {e}")
+    return {}
+
 
 def display_vault_data(data):
     """Display the vault data."""
