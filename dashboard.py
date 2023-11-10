@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 API_ENDPOINT_1 = "http://206.189.56.114:3000/metrics/status"
 API_ENDPOINT_2 = "http://206.189.56.114:3001/metrics/status"
 API_ENDPOINT_3 = "http://206.189.56.114:3002/metrics/status"
+API_ENDPOINT_4 = "http://206.189.56.114:3003/metrics/status"
 
 @st.cache_data(ttl=300)  # Cache results for 5 minutes (300 seconds)
 def fetch_data(api_endpoint):
@@ -101,7 +102,7 @@ def main():
     st.title("Brokkr LP Vaults Current State")
     
     # Create tabs for each API endpoint
-    tab1, tab2, tab3 = st.tabs(["ASYMMETRIC (5, 95)", "ASYMMETRIC (100, 5)", "HODL"])
+    tab1, tab2, tab3, tab4 = st.tabs(["ASYMMETRIC (5, 95)", "ASYMMETRIC (100, 5)", "HODL", "BLOCK"])
 
     with tab1:
         display_data_for_endpoint(API_ENDPOINT_1)
@@ -111,6 +112,9 @@ def main():
 
     with tab3:
         display_data_for_endpoint(API_ENDPOINT_3)
+
+    with tab4:
+        display_data_for_endpoint(API_ENDPOINT_4)
 
 if __name__ == "__main__":
     main()
