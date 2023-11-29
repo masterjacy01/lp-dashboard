@@ -3,11 +3,11 @@ import streamlit as st
 import requests
 import plotly.graph_objects as go
 
-# Define the API endpoints
-API_ENDPOINT_1 = "http://206.189.56.114:3000/metrics/status"
-API_ENDPOINT_2 = "http://206.189.56.114:3001/metrics/status"
-API_ENDPOINT_3 = "http://206.189.56.114:3002/metrics/status"
-API_ENDPOINT_4 = "http://206.189.56.114:3003/metrics/status"
+# Access the API endpoints from st.secrets
+API_ENDPOINT_1 = st.secrets["api_endpoints"]["endpoint_1"]
+API_ENDPOINT_2 = st.secrets["api_endpoints"]["endpoint_2"]
+API_ENDPOINT_3 = st.secrets["api_endpoints"]["endpoint_3"]
+API_ENDPOINT_4 = st.secrets["api_endpoints"]["endpoint_4"]
 
 @st.cache_data(ttl=300)  # Cache results for 5 minutes (300 seconds)
 def fetch_data(api_endpoint):
@@ -29,7 +29,6 @@ def display_vault_data(data):
     """Display the vault data."""
     st.subheader("Vault Data")
     st.write("Vault Address:", data["vaultAddress"])
-    st.write("Fee Tier:", data["feeTier"])
     st.write("Token 0 Address:", data["token0Address"])
     st.write("Token 0 Decimals:", data["token0Decimals"])
     st.write("Token 0 Symbol:", data["token0Symbol"])
@@ -90,7 +89,6 @@ def display_liquidity_positions(data):
 
 def display_data_for_endpoint(api_endpoint):
     """Display data for a given API endpoint."""
-    st.subheader(f"Data from {api_endpoint}")
     
     # Fetch the data
     data = fetch_data(api_endpoint)
@@ -108,7 +106,7 @@ def main():
     st.title("Brokkr LP Vaults Current State")
     
     # Create tabs for each API endpoint
-    tab1, tab2, tab3, tab4 = st.tabs(["ASYMMETRIC (5, 95)", "ASYMMETRIC (100, 5)", "HODL", "BLOCK"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Bullish", "Bearish", "Hodl", "Block"])
 
     with tab1:
         display_data_for_endpoint(API_ENDPOINT_1)
